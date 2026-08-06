@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  postgres-local:
+    image: postgres:16-alpine
+    container_name: tronhanh-postgres-local
+    environment:
+      POSTGRES_DB: tronhanh_local
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      TZ: UTC
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_local:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tronhanh_local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis-local:
+    image: redis:7-alpine
+    container_name: tronhanh-redis-local
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata_local:

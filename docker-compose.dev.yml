@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: tronhanh-be-dev
+    ports:
+      - "${SERVER_PORT}:8089"
+    env_file:
+      - .env.dev
+    environment:
+      - APP_PROFILE=${APP_PROFILE}
+      - SERVER_PORT=${SERVER_PORT}
+      - TN_DEV_DB_URL=${TN_DEV_DB_URL}
+      - TN_DEV_DB_USERNAME=${TN_DEV_DB_USERNAME}
+      - TN_DEV_DB_PASSWORD=${TN_DEV_DB_PASSWORD}
+      - TN_REDIS_HOST=${TN_REDIS_HOST}
+      - TN_REDIS_PORT=${TN_REDIS_PORT}
+      - TN_JWT_SECRET=${TN_JWT_SECRET}
+      - TN_JWT_EXPIRY_MS=${TN_JWT_EXPIRY_MS}
+      - TN_CORS_ALLOWED_ORIGINS=${TN_CORS_ALLOWED_ORIGINS}
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+      redis-dev:
+        condition: service_started
+
+  postgres-dev:
+    image: postgres:16-alpine
+    container_name: tronhanh-postgres-dev
+    env_file:
+      - .env.dev
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: UTC
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis-dev:
+    image: redis:7-alpine
+    container_name: tronhanh-redis-dev
+    ports:
+      - "${TN_REDIS_PORT}:6379"
+
+volumes:
+  pgdata_dev:

@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: tronhanh-be-prod
+    ports:
+      - "${SERVER_PORT}:8089"
+    env_file:
+      - .env.prod
+    environment:
+      - APP_PROFILE=${APP_PROFILE}
+      - SERVER_PORT=${SERVER_PORT}
+      - TN_PROD_DB_URL=${TN_PROD_DB_URL}
+      - TN_PROD_DB_USERNAME=${TN_PROD_DB_USERNAME}
+      - TN_PROD_DB_PASSWORD=${TN_PROD_DB_PASSWORD}
+      - TN_REDIS_HOST=${TN_REDIS_HOST}
+      - TN_REDIS_PORT=${TN_REDIS_PORT}
+      - TN_REDIS_PASSWORD=${TN_REDIS_PASSWORD}
+      - TN_JWT_SECRET=${TN_JWT_SECRET}
+      - TN_JWT_EXPIRY_MS=${TN_JWT_EXPIRY_MS}
+      - TN_CORS_ALLOWED_ORIGINS=${TN_CORS_ALLOWED_ORIGINS}
+    depends_on:
+      postgres-prod:
+        condition: service_healthy
+      redis-prod:
+        condition: service_started
+    restart: always
+
+  postgres-prod:
+    image: postgres:16-alpine
+    container_name: tronhanh-postgres-prod
+    env_file:
+      - .env.prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: UTC
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  redis-prod:
+    image: redis:7-alpine
+    container_name: tronhanh-redis-prod
+    command: redis-server --requirepass ${TN_REDIS_PASSWORD}
+    restart: always
+
+volumes:
+  pgdata_prod:
