@@ -1,6 +1,5 @@
 package com.tronhanh.dto.request.auth;
 
-import com.tronhanh.validation.I18nField;
 import com.tronhanh.validation.RequireField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -23,6 +22,6 @@ public class RefreshTokenRequest
    * Active Refresh Token issued during 2FA verification.
    */
   @Schema(description = "Refresh token string", example = "eyJhbGciOiJIUzI1NiJ9...")
-  @RequireField(i18n = @I18nField(vi = "Refresh Token", en = "Refresh Token"))
+  @RequireField(field = "Refresh Token")
   private String refreshToken;
 }

@@ -2,11 +2,9 @@ package com.tronhanh.exception;
 
 import com.tronhanh.constant.MessageCodeConstant;
 import com.tronhanh.dto.response.common.ApiResponse;
-import com.tronhanh.dto.response.common.LocalizedMessageDto;
 import com.tronhanh.util.MessageUtils;
 import com.tronhanh.util.ResponseUtils;
 import com.tronhanh.validation.EnumValue;
-import com.tronhanh.validation.I18nField;
 import com.tronhanh.validation.RequireField;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -24,7 +22,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
  * Global exception handler providing centralized error responses across all REST controllers.
- * Processes custom {@link HttpException}, validation annotations ({@link RequireField}, {@link EnumValue}, {@link I18nField}),
+ * Processes custom {@link HttpException}, validation annotations ({@link RequireField}, {@link EnumValue}),
  * and unhandled system exceptions into standardized {@link ApiResponse} envelopes.
  */
 @RestControllerAdvice
@@ -41,18 +39,23 @@ public class GlobalExceptionHandler
    */
   @ExceptionHandler(HttpException.class)
   public ResponseEntity<ApiResponse<Object>> handleHttpException(HttpException ex) {
-    logger.error("HttpException occurred: status={}, message={}", ex.getStatusCode(), ex.getLocalizedMessageDto());
+    logger.error("HttpException occurred: status={}, message={}", ex.getStatusCode(), ex.getMessage());
     HttpStatus status = HttpStatus.resolve(ex.getStatusCode());
     if (Objects.isNull(status)) {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
     }
-    String messageCode = Objects.nonNull(ex.getLocalizedMessageDto()) ? ex.getLocalizedMessageDto().getVi() : MessageCodeConstant.MSG_CODE_105;
-    return ResponseUtils.error(status, messageCode);
+    if (Objects.nonNull(ex.getMessageCode())) {
+      if (Objects.nonNull(ex.getArgs()) && ex.getArgs().length > 0) {
+        return ResponseUtils.error(status, ex.getMessageCode(), ex.getArgs());
+      }
+      return ResponseUtils.error(status, ex.getMessageCode());
+    }
+    return ResponseUtils.error(status, MessageCodeConstant.MSG_CODE_105);
   }
 
   /**
    * Handles validation errors thrown during @Valid DTO request body processing.
-   * Extracts {@link RequireField}, {@link EnumValue}, and {@link I18nField} meta-annotations to build localized messages.
+   * Extracts {@link RequireField} and {@link EnumValue} annotations to build English validation messages.
    *
    * @param ex the MethodArgumentNotValidException instance
    * @return ResponseEntity with standardized ApiResponse
@@ -62,7 +65,7 @@ public class GlobalExceptionHandler
       MethodArgumentNotValidException ex) {
     logger.error("MethodArgumentNotValidException occurred: {}", ex.getMessage());
 
-    List<LocalizedMessageDto> errors = new ArrayList<>();
+    List<String> errors = new ArrayList<>();
 
     for (ObjectError error : ex.getBindingResult().getAllErrors()) {
       try {
@@ -71,15 +74,15 @@ public class GlobalExceptionHandler
           var annotation = violation.getConstraintDescriptor().getAnnotation();
           if (annotation instanceof RequireField requireField) {
             String messageCode = requireField.messageCode();
-            I18nField i18n = requireField.i18n();
-            LocalizedMessageDto localizedMsg = MessageUtils.getMessageWithI18n(messageCode, i18n);
-            errors.add(localizedMsg);
+            String fieldName = !requireField.field().isBlank() ? requireField.field() : violation.getPropertyPath().toString();
+            String msg = MessageUtils.getMessage(messageCode, fieldName);
+            errors.add(msg);
             continue;
           } else if (annotation instanceof EnumValue enumValue) {
             String messageCode = enumValue.messageCode();
-            I18nField i18n = enumValue.i18n();
-            LocalizedMessageDto localizedMsg = MessageUtils.getMessageWithI18n(messageCode, i18n);
-            errors.add(localizedMsg);
+            String fieldName = !enumValue.field().isBlank() ? enumValue.field() : violation.getPropertyPath().toString();
+            String msg = MessageUtils.getMessage(messageCode, fieldName);
+            errors.add(msg);
             continue;
           }
         }
@@ -89,11 +92,7 @@ public class GlobalExceptionHandler
 
       String defaultMsg = error.getDefaultMessage();
       if (Objects.nonNull(defaultMsg) && !defaultMsg.isBlank()) {
-        errors.add(
-            LocalizedMessageDto.builder()
-                .vi(defaultMsg)
-                .en(defaultMsg)
-                .build());
+        errors.add(defaultMsg);
       }
     }
 
@@ -111,27 +110,23 @@ public class GlobalExceptionHandler
       ConstraintViolationException ex) {
     logger.error("ConstraintViolationException occurred: {}", ex.getMessage());
 
-    List<LocalizedMessageDto> errors = new ArrayList<>();
+    List<String> errors = new ArrayList<>();
 
     for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
       if (Objects.nonNull(violation.getConstraintDescriptor())) {
         var annotation = violation.getConstraintDescriptor().getAnnotation();
         if (annotation instanceof RequireField requireField) {
           String messageCode = requireField.messageCode();
-          I18nField i18n = requireField.i18n();
-          LocalizedMessageDto localizedMsg = MessageUtils.getMessageWithI18n(messageCode, i18n);
-          errors.add(localizedMsg);
+          String fieldName = !requireField.field().isBlank() ? requireField.field() : violation.getPropertyPath().toString();
+          String msg = MessageUtils.getMessage(messageCode, fieldName);
+          errors.add(msg);
         } else if (annotation instanceof EnumValue enumValue) {
           String messageCode = enumValue.messageCode();
-          I18nField i18n = enumValue.i18n();
-          LocalizedMessageDto localizedMsg = MessageUtils.getMessageWithI18n(messageCode, i18n);
-          errors.add(localizedMsg);
+          String fieldName = !enumValue.field().isBlank() ? enumValue.field() : violation.getPropertyPath().toString();
+          String msg = MessageUtils.getMessage(messageCode, fieldName);
+          errors.add(msg);
         } else {
-          errors.add(
-              LocalizedMessageDto.builder()
-                  .vi(violation.getMessage())
-                  .en(violation.getMessage())
-                  .build());
+          errors.add(violation.getMessage());
         }
       }
     }

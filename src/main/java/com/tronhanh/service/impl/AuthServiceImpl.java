@@ -12,11 +12,11 @@ import com.tronhanh.dto.response.auth.UserProfileResponse;
 import com.tronhanh.entity.UserEntity;
 import com.tronhanh.enums.UserStatus;
 import com.tronhanh.exception.HttpException;
+import com.tronhanh.helper.UserHelper;
 import com.tronhanh.repository.UserRepository;
 import com.tronhanh.security.JwtProvider;
 import com.tronhanh.service.AuthService;
 import com.tronhanh.service.RedisService;
-import com.tronhanh.helper.UserHelper;
 import com.tronhanh.util.CommonUtil;
 import com.tronhanh.util.MessageUtils;
 import java.util.Objects;
@@ -70,21 +70,21 @@ public class AuthServiceImpl implements AuthService
   public LoginResponse login(LoginRequest request) {
     UserEntity user = userRepository.findByPhoneNumberAndIsDeletedFalse(request.getPhoneNumber())
         .orElseThrow(() -> new HttpException(
-            HttpStatus.UNAUTHORIZED.value(),
-            MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_101)
+            HttpStatus.UNAUTHORIZED,
+            MessageCodeConstant.MSG_CODE_101
         ));
 
     if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
       throw new HttpException(
-          HttpStatus.UNAUTHORIZED.value(),
-          MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_101)
+          HttpStatus.UNAUTHORIZED,
+          MessageCodeConstant.MSG_CODE_101
       );
     }
 
     if (user.getStatus() != UserStatus.ACTIVE) {
       throw new HttpException(
-          HttpStatus.FORBIDDEN.value(),
-          MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_102)
+          HttpStatus.FORBIDDEN,
+          MessageCodeConstant.MSG_CODE_102
       );
     }
 
@@ -112,16 +112,16 @@ public class AuthServiceImpl implements AuthService
     String phoneNumber = redisService.get(AppConstant.PENDING_AUTH_PREFIX + request.getSessionId());
     if (Objects.isNull(phoneNumber)) {
       throw new HttpException(
-          HttpStatus.BAD_REQUEST.value(),
-          MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_201)
+          HttpStatus.BAD_REQUEST,
+          MessageCodeConstant.MSG_CODE_201
       );
     }
 
     String storedOtp = redisService.get(AppConstant.OTP_PREFIX + phoneNumber);
     if (Objects.isNull(storedOtp) || !storedOtp.equals(request.getOtpCode())) {
       throw new HttpException(
-          HttpStatus.BAD_REQUEST.value(),
-          MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_201)
+          HttpStatus.BAD_REQUEST,
+          MessageCodeConstant.MSG_CODE_201
       );
     }
 
@@ -131,8 +131,9 @@ public class AuthServiceImpl implements AuthService
 
     UserEntity user = userRepository.findByPhoneNumberAndIsDeletedFalse(phoneNumber)
         .orElseThrow(() -> new HttpException(
-            HttpStatus.NOT_FOUND.value(),
-            MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_103, "User")
+            HttpStatus.NOT_FOUND,
+            MessageCodeConstant.MSG_CODE_103,
+            "User"
         ));
 
     // Generate new Token Family ID
@@ -162,8 +163,8 @@ public class AuthServiceImpl implements AuthService
     String refreshToken = request.getRefreshToken();
     if (!jwtProvider.validateToken(refreshToken)) {
       throw new HttpException(
-          HttpStatus.UNAUTHORIZED.value(),
-          MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_201)
+          HttpStatus.UNAUTHORIZED,
+          MessageCodeConstant.MSG_CODE_201
       );
     }
 
@@ -175,8 +176,8 @@ public class AuthServiceImpl implements AuthService
     if (redisService.hasKey(AppConstant.RT_REVOKED_FAMILY_PREFIX + familyId)) {
       log.warn("[Token Theft] Attempt to use token from revoked family: {}", familyId);
       throw new HttpException(
-          HttpStatus.UNAUTHORIZED.value(),
-          MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_201)
+          HttpStatus.UNAUTHORIZED,
+          MessageCodeConstant.MSG_CODE_201
       );
     }
 
@@ -188,8 +189,8 @@ public class AuthServiceImpl implements AuthService
       redisService.set(AppConstant.RT_REVOKED_FAMILY_PREFIX + familyId, "REVOKED", AppConstant.REFRESH_FAMILY_TTL_DAYS, TimeUnit.DAYS);
 
       throw new HttpException(
-          HttpStatus.UNAUTHORIZED.value(),
-          MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_201)
+          HttpStatus.UNAUTHORIZED,
+          MessageCodeConstant.MSG_CODE_201
       );
     }
 
@@ -198,8 +199,9 @@ public class AuthServiceImpl implements AuthService
 
     UserEntity user = userRepository.findById(userId)
         .orElseThrow(() -> new HttpException(
-            HttpStatus.NOT_FOUND.value(),
-            MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_103, "User")
+            HttpStatus.NOT_FOUND,
+            MessageCodeConstant.MSG_CODE_103,
+            "User"
         ));
 
     // 4. Rotate tokens: Keep same familyId, generate new JTI for AT and RT
@@ -259,8 +261,8 @@ public class AuthServiceImpl implements AuthService
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (Objects.isNull(authentication) || !(authentication.getPrincipal() instanceof UserEntity user)) {
       throw new HttpException(
-          HttpStatus.UNAUTHORIZED.value(),
-          MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_101)
+          HttpStatus.UNAUTHORIZED,
+          MessageCodeConstant.MSG_CODE_101
       );
     }
 

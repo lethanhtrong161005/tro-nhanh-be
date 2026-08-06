@@ -1,31 +1,62 @@
 package com.tronhanh.exception;
 
-import com.tronhanh.dto.response.common.LocalizedMessageDto;
-import java.util.Objects;
+import com.tronhanh.util.MessageUtils;
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
 /**
- * Custom runtime exception carrying HTTP status code and localized error message DTO.
+ * Custom runtime exception carrying HTTP status code, message code, parameters, and English error message.
  */
 @Getter
 public class HttpException extends RuntimeException
 {
 
   private final int statusCode;
-  private final LocalizedMessageDto localizedMessageDto;
+  private final String messageCode;
+  private final Object[] args;
 
   /**
-   * HttpException constructor.
+   * Constructs HttpException with HttpStatus enum and message code.
    *
-   * @param statusCode HTTP status integer
-   * @param localizedMessageDto localized message payload
+   * @param status HTTP status enum.
+   * @param messageCode Message bundle key string.
    */
-  public HttpException(int statusCode, LocalizedMessageDto localizedMessageDto) {
-    super(
-        Objects.nonNull(localizedMessageDto) && Objects.nonNull(localizedMessageDto.getEn())
-            ? localizedMessageDto.getEn()
-            : "HTTP Exception");
+  public HttpException(HttpStatus status, String messageCode) {
+    this(status.value(), messageCode, (Object[]) null);
+  }
+
+  /**
+   * Constructs HttpException with HttpStatus enum, message code, and parameters.
+   *
+   * @param status HTTP status enum.
+   * @param messageCode Message bundle key string.
+   * @param args Parameters for message placeholder substitution.
+   */
+  public HttpException(HttpStatus status, String messageCode, Object... args) {
+    this(status.value(), messageCode, args);
+  }
+
+  /**
+   * Constructs HttpException with status integer and message code.
+   *
+   * @param statusCode HTTP status integer.
+   * @param messageCode Message bundle key string.
+   */
+  public HttpException(int statusCode, String messageCode) {
+    this(statusCode, messageCode, (Object[]) null);
+  }
+
+  /**
+   * Constructs HttpException with status integer, message code, and parameters.
+   *
+   * @param statusCode HTTP status integer.
+   * @param messageCode Message bundle key string.
+   * @param args Parameters for message placeholder substitution.
+   */
+  public HttpException(int statusCode, String messageCode, Object... args) {
+    super(MessageUtils.getMessage(messageCode, args));
     this.statusCode = statusCode;
-    this.localizedMessageDto = localizedMessageDto;
+    this.messageCode = messageCode;
+    this.args = args;
   }
 }

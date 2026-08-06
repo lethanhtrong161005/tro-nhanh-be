@@ -26,18 +26,18 @@ public @interface EnumValue {
   Class<? extends Enum<?>> enumClass();
 
   /**
-   * Message code constant for internationalized validation failure.
+   * Message code constant for validation failure.
    *
    * @return message code key
    */
   String messageCode() default MessageCodeConstant.MSG_CODE_204;
 
   /**
-   * Field display label meta-annotation for localized %s message formatting.
+   * Field display name for message formatting.
    *
-   * @return I18nField meta-annotation
+   * @return field name string
    */
-  I18nField i18n() default @I18nField;
+  String field() default "";
 
   /**
    * Validation message template.

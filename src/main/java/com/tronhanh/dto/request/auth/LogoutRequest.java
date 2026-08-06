@@ -1,6 +1,5 @@
 package com.tronhanh.dto.request.auth;
 
-import com.tronhanh.validation.I18nField;
 import com.tronhanh.validation.RequireField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -23,6 +22,6 @@ public class LogoutRequest
    * Refresh Token associated with active user session.
    */
   @Schema(description = "Refresh token to be revoked", example = "eyJhbGciOiJIUzI1NiJ9...")
-  @RequireField(i18n = @I18nField(vi = "Refresh Token", en = "Refresh Token"))
+  @RequireField(field = "Refresh Token")
   private String refreshToken;
 }
