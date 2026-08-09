@@ -5,6 +5,7 @@ import com.tronhanh.constant.AppConstant;
 import com.tronhanh.constant.MessageCodeConstant;
 import com.tronhanh.dto.response.common.ApiResponse;
 import com.tronhanh.security.JwtAuthenticationFilter;
+import com.tronhanh.security.TraceIdFilter;
 import com.tronhanh.util.ResponseUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +39,11 @@ public class SecurityConfig
    * JWT authentication filter component.
    */
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+  /**
+   * Trace ID MDC filter component.
+   */
+  private final TraceIdFilter traceIdFilter;
 
   /**
    * JSON object mapper component.
@@ -88,7 +94,8 @@ public class SecurityConfig
             .requestMatchers(AppConstant.PUBLIC_ENDPOINTS).permitAll()
             .anyRequest().authenticated()
         )
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(traceIdFilter, JwtAuthenticationFilter.class);
 
     return http.build();
   }

@@ -41,11 +41,8 @@ public class RoleEntity extends BaseEntity
   @Column(name = "role_name", nullable = false, unique = true, length = 50)
   private RoleName roleName;
 
-  @Column(name = "description_vi")
-  private String descriptionVi;
-
-  @Column(name = "description_en")
-  private String descriptionEn;
+  @Column(name = "description")
+  private String description;
 
   @OneToMany(mappedBy = "role")
   @Builder.Default
