@@ -3,6 +3,7 @@ package com.tronhanh.util;
 import com.tronhanh.constant.AppConstant;
 import com.tronhanh.constant.MessageCodeConstant;
 import com.tronhanh.dto.response.common.ApiResponse;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -39,7 +40,7 @@ public final class ResponseUtils
             .messageCode(messageCode)
             .message(localizedMessage)
             .data(data)
-            .timestamp(LocalDateTime.now())
+            .timestamp(Instant.now())
             .build());
   }
 
@@ -94,7 +95,7 @@ public final class ResponseUtils
                 .status(status.value())
                 .messageCode(messageCode)
                 .message(localizedMessage)
-                .timestamp(LocalDateTime.now())
+                .timestamp(Instant.now())
                 .build());
   }
 
@@ -117,7 +118,7 @@ public final class ResponseUtils
                 .status(status.value())
                 .messageCode(messageCode)
                 .message(localizedMessage)
-                .timestamp(LocalDateTime.now())
+                .timestamp(Instant.now())
                 .build());
   }
 

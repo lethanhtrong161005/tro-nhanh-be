@@ -7,8 +7,7 @@
 CREATE TABLE roles (
     role_id UUID PRIMARY KEY,
     role_name VARCHAR(50) NOT NULL,
-    description_vi TEXT,
-    description_en TEXT,
+    description TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ,
     created_by VARCHAR(100),
@@ -51,6 +50,6 @@ CREATE TABLE system_role_assignments (
 );
 
 -- Indexes for performance optimization
-CREATE INDEX idx_users_email ON users (email);
+CREATE INDEX idx_users_phone_number ON users (phone_number);
 CREATE INDEX idx_system_role_assignments_user ON system_role_assignments (user_id);
 CREATE INDEX idx_system_role_assignments_role ON system_role_assignments (role_id);

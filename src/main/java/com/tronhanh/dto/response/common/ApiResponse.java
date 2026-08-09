@@ -1,7 +1,7 @@
 package com.tronhanh.dto.response.common;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -49,5 +49,5 @@ public class ApiResponse<T>
    */
   @Schema(description = "ISO-8601 timestamp when response was generated", example = "2026-08-06T15:52:00")
   @Builder.Default
-  private LocalDateTime timestamp = LocalDateTime.now();
+  private Instant timestamp = Instant.now();
 }
