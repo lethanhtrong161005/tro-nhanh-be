@@ -1,7 +1,7 @@
 package com.tronhanh.security;
 
 import com.tronhanh.entity.UserEntity;
-import com.tronhanh.enums.RoleName;
+import com.tronhanh.util.CommonUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -22,24 +22,17 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class JwtProvider
-{
+public class JwtProvider {
 
-  /**
-   * Secret key for signing JWT tokens.
-   */
+  /** Secret key for signing JWT tokens. */
   @Value("${tn.jwt.secret}")
   private String jwtSecret;
 
-  /**
-   * Access token expiration duration in milliseconds.
-   */
+  /** Access token expiration duration in milliseconds. */
   @Value("${tn.jwt.access-token-expiration-ms}")
   private long accessTokenExpirationMs;
 
-  /**
-   * Refresh token expiration duration in milliseconds.
-   */
+  /** Refresh token expiration duration in milliseconds. */
   @Value("${tn.jwt.refresh-token-expiration-ms}")
   private long refreshTokenExpirationMs;
 
@@ -54,7 +47,8 @@ public class JwtProvider
   }
 
   /**
-   * Generates Access Token containing JTI, family ID, user ID, email, phone number, and role claims.
+   * Generates Access Token containing JTI, family ID, user ID, email, phone number, and role
+   * claims.
    *
    * @param user UserEntity instance.
    * @param familyId Token family UUID string.
@@ -63,13 +57,14 @@ public class JwtProvider
   public String generateAccessToken(UserEntity user, String familyId) {
     Date now = new Date();
     Date expiryDate = new Date(now.getTime() + accessTokenExpirationMs);
-    String jti = UUID.randomUUID().toString();
+    String jti = CommonUtil.generateUuidV7().toString();
 
-    String roleName = (Objects.nonNull(user.getSystemRoleAssignment())
-        && Objects.nonNull(user.getSystemRoleAssignment().getRole())
-        && Objects.nonNull(user.getSystemRoleAssignment().getRole().getRoleName()))
-        ? user.getSystemRoleAssignment().getRole().getRoleName().name()
-        : null;
+    String roleName =
+        (Objects.nonNull(user.getSystemRoleAssignment())
+                && Objects.nonNull(user.getSystemRoleAssignment().getRole())
+                && Objects.nonNull(user.getSystemRoleAssignment().getRole().getRoleName()))
+            ? user.getSystemRoleAssignment().getRole().getRoleName().name()
+            : null;
 
     return Jwts.builder()
         .id(jti)
@@ -95,7 +90,7 @@ public class JwtProvider
   public String generateRefreshToken(UserEntity user, String familyId) {
     Date now = new Date();
     Date expiryDate = new Date(now.getTime() + refreshTokenExpirationMs);
-    String jti = UUID.randomUUID().toString();
+    String jti = CommonUtil.generateUuidV7().toString();
 
     return Jwts.builder()
         .id(jti)
@@ -114,11 +109,7 @@ public class JwtProvider
    * @return Claims payload object.
    */
   public Claims getClaimsFromToken(String token) {
-    return Jwts.parser()
-        .verifyWith(getSigningKey())
-        .build()
-        .parseSignedClaims(token)
-        .getPayload();
+    return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
   }
 
   /**

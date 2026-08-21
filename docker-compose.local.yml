@@ -8,5 +8,13 @@ services:
     ports:
       - "6379:6379"
 
+  redis-ui:
+    image: redis/redisinsight:latest
+    container_name: tronhanh-redis-ui
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis-local
 volumes:
   pgdata_local:

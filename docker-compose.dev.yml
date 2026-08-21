@@ -53,5 +53,14 @@ services:
     ports:
       - "${TN_REDIS_PORT}:6379"
 
+  redis-ui:
+    image: redis/redisinsight:latest
+    container_name: tronhanh-redis-ui-dev
+    restart: unless-stopped
+    ports:
+      - "5541:5540"
+    depends_on:
+      - redis-dev
+
 volumes:
   pgdata_dev:

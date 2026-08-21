@@ -6,12 +6,9 @@ import com.tronhanh.enums.RoleName;
 import java.util.Objects;
 import org.springframework.stereotype.Component;
 
-/**
- * Helper component for mapping {@link UserEntity} to DTO responses.
- */
+/** Helper component for mapping {@link UserEntity} to DTO responses. */
 @Component
-public class UserHelper
-{
+public class UserHelper {
 
   /**
    * Maps {@link UserEntity} to {@link UserProfileResponse}.
@@ -24,9 +21,11 @@ public class UserHelper
       return null;
     }
 
-    RoleName roleName = (Objects.nonNull(user.getSystemRoleAssignment()) && Objects.nonNull(user.getSystemRoleAssignment().getRole()))
-        ? user.getSystemRoleAssignment().getRole().getRoleName()
-        : null;
+    RoleName roleName =
+        (Objects.nonNull(user.getSystemRoleAssignment())
+                && Objects.nonNull(user.getSystemRoleAssignment().getRole()))
+            ? user.getSystemRoleAssignment().getRole().getRoleName()
+            : null;
 
     return UserProfileResponse.builder()
         .userId(user.getUserId())

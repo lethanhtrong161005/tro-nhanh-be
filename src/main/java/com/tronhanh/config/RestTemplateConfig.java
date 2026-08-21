@@ -6,12 +6,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
-/**
- * Global RestTemplate bean configuration for external HTTP integrations with custom timeouts.
- */
+/** Global RestTemplate bean configuration for external HTTP integrations with custom timeouts. */
 @Configuration
-public class RestTemplateConfig
-{
+public class RestTemplateConfig {
 
   /**
    * Constructs global RestTemplate bean with 5-second connect timeout and 10-second read timeout.

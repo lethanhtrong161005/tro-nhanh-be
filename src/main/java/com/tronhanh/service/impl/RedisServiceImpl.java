@@ -9,23 +9,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-/**
- * Implementation of {@link RedisService} wrapping Spring RedisTemplate.
- */
+/** Implementation of {@link RedisService} wrapping Spring RedisTemplate. */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RedisServiceImpl implements RedisService
-{
+public class RedisServiceImpl implements RedisService {
 
-  /**
-   * Spring Data Redis template instance.
-   */
+  /** Spring Data Redis template instance. */
   private final RedisTemplate<String, Object> redisTemplate;
 
-  /**
-   * Jackson object mapper instance.
-   */
+  /** Jackson object mapper instance. */
   private final ObjectMapper objectMapper;
 
   @Override

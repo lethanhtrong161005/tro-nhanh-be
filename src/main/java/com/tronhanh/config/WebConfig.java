@@ -9,9 +9,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-/**
- * Web configuration bean initializing CORS filter and origin access controls.
- */
+/** Web configuration bean initializing CORS filter and origin access controls. */
 @Configuration
 public class WebConfig {
 

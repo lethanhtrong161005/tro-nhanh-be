@@ -7,32 +7,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Response payload for system health check endpoint.
- */
+/** Response payload for system health check endpoint. */
 @Schema(description = "System health check status response")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HealthCheckResponse
-{
+public class HealthCheckResponse {
 
-  /**
-   * Overall health status string (e.g., UP, DOWN).
-   */
+  /** Overall health status string (e.g., UP, DOWN). */
   @Schema(description = "Application status string", example = "UP")
   private String status;
 
-  /**
-   * System current timestamp.
-   */
+  /** System current timestamp. */
   @Schema(description = "System timestamp", example = "2026-08-06T15:52:00")
   private LocalDateTime timestamp;
 
-  /**
-   * Application name.
-   */
+  /** Application name. */
   @Schema(description = "Application service name", example = "Tro Nhanh Backend")
   private String applicationName;
 }

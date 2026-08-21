@@ -1,6 +1,7 @@
 package com.tronhanh.security;
 
 import com.tronhanh.constant.AppConstant;
+import com.tronhanh.util.CommonUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,13 +10,14 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.UUID;
 import org.slf4j.MDC;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/**
- * Filter generating or forwarding MDC trace IDs for distributed request tracking.
- */
+/** Filter generating or forwarding MDC trace IDs for distributed request tracking. */
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class TraceIdFilter extends OncePerRequestFilter {
 
   /**
@@ -34,7 +36,7 @@ public class TraceIdFilter extends OncePerRequestFilter {
     try {
       String traceId = request.getHeader(AppConstant.TRACE_ID_HEADER);
       if (Objects.isNull(traceId) || traceId.isBlank()) {
-        traceId = UUID.randomUUID().toString();
+        traceId = CommonUtil.generateUuidV7().toString();
       }
 
       MDC.put(AppConstant.TRACE_ID_KEY, traceId);

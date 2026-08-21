@@ -13,18 +13,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Controller exposing system health check endpoints.
- */
+/** Controller exposing system health check endpoints. */
 @Tag(name = "Health", description = "System Health and Monitoring API")
 @RestController
 @RequestMapping("/api/v1/health")
-public class HealthController
-{
+public class HealthController {
 
-  /**
-   * Application name injected from environment configuration.
-   */
+  /** Application name injected from environment configuration. */
   @Value("${spring.application.name:tro-nhanh-be}")
   private String applicationName;
 
@@ -36,11 +31,12 @@ public class HealthController
   @Operation(summary = "Get application health status")
   @GetMapping
   public ResponseEntity<ApiResponse<HealthCheckResponse>> checkHealth() {
-    HealthCheckResponse response = HealthCheckResponse.builder()
-        .status("UP")
-        .timestamp(LocalDateTime.now())
-        .applicationName(applicationName)
-        .build();
+    HealthCheckResponse response =
+        HealthCheckResponse.builder()
+            .status("UP")
+            .timestamp(LocalDateTime.now())
+            .applicationName(applicationName)
+            .build();
 
     return ResponseUtils.successWithData(response, MessageCodeConstant.MSG_CODE_001);
   }

@@ -5,10 +5,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import com.tronhanh.annotation.UuidV7;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +32,7 @@ public class RoleEntity extends BaseEntity
 {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
+  @UuidV7
   @Column(name = "role_id", updatable = false, nullable = false)
   private UUID roleId;
 

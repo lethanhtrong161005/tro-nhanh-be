@@ -7,8 +7,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Main entry point for the Tro Nhanh backend application.
- * Automatically sets JVM default timezone to UTC and loads local .env files if present.
+ * Main entry point for the Tro Nhanh backend application. Automatically sets JVM default timezone
+ * to UTC and loads local .env files if present.
  */
 @SpringBootApplication
 public class TroNhanhBeApplication {

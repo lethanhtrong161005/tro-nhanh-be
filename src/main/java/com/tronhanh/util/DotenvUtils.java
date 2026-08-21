@@ -21,8 +21,8 @@ public final class DotenvUtils {
   }
 
   /**
-   * Automatically loads environment variables from .env.local, .env.dev, or .env files
-   * into JVM System properties if not already defined in system environment or System properties.
+   * Automatically loads environment variables from .env.local, .env.dev, or .env files into JVM
+   * System properties if not already defined in system environment or System properties.
    */
   public static void loadEnvFile() {
     String profile = System.getenv(AppConstant.APP_PROFILE_KEY);

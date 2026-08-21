@@ -47,30 +47,33 @@
 
 ### Class: `MessageCodeConstant` in `constant` package
 
-All message codes in one central class. Self-referencing value = key name. Each message constant MUST have a JavaDoc documenting its Vietnamese (VI) and English (EN) translations using `<ul><li>VI: ... <li>EN: ... </ul>`:
+All message codes in one central class. Self-referencing value = key name. Each message constant
+MUST have a JavaDoc using a `<ul><li>EN: ...` HTML list to document the English message text:
 
 ```java
   /**
    * <ul>
-   *   <li>VI: Thao tác thành công.
    *   <li>EN: Operation successful.
    * </ul>
    */
   public static final String MSG_CODE_001 = "MSG_CODE_001";
 ```
 
+> **Rule:** Do NOT add a VI (Vietnamese) line in the JavaDoc. Vietnamese translations, if needed,
+> belong only in the i18n resource file `messages_vi.properties` — not in source code comments.
+
 ### Reusable `{0}`-parameterized templates
 
 Reuse before adding new codes:
 
-| Code | Template (EN) | Template (VI) |
-|------|--------------|--------------|
-| `MSG_CODE_002` | `{0} created successfully.` | `{0} tạo thành công.` |
-| `MSG_CODE_003` | `{0} updated successfully.` | `{0} cập nhật thành công.` |
-| `MSG_CODE_004` | `{0} deleted successfully.` | `{0} xóa thành công.` |
-| `MSG_CODE_103` | `{0} not found.` | `{0} không tìm thấy.` |
-| `MSG_CODE_104` | `{0} already exists.` | `{0} đã tồn tại.` |
-| `MSG_CODE_200` | `{0} is required.` | `{0} là bắt buộc.` |
+| Code | Template (EN) |
+|------|---------------|
+| `MSG_CODE_002` | `{0} created successfully.` |
+| `MSG_CODE_003` | `{0} updated successfully.` |
+| `MSG_CODE_004` | `{0} deleted successfully.` |
+| `MSG_CODE_103` | `{0} not found.` |
+| `MSG_CODE_104` | `{0} already exists.` |
+| `MSG_CODE_200` | `{0} is required.` |
 
 Usage:
 ```java

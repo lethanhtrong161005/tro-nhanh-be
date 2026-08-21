@@ -1,8 +1,8 @@
 package com.tronhanh.constant;
 
 /**
- * Centralized registry of application message codes mapped to message bundle keys.
- * All constants use self-referencing values (e.g. MSG_CODE_001 = "MSG_CODE_001").
+ * Centralized registry of application message codes mapped to message bundle keys. All constants
+ * use self-referencing values (e.g. MSG_CODE_001 = "MSG_CODE_001").
  */
 public final class MessageCodeConstant {
 
@@ -10,120 +10,164 @@ public final class MessageCodeConstant {
     // Utility class
   }
 
-  // ============================================================
-  // Success Messages (001 - 099)
-  // ============================================================
-
   /**
-   * Operation successful.
+   * <ul>
+   *   <li>EN: Operation successful.
+   * </ul>
    */
   public static final String MSG_CODE_001 = "MSG_CODE_001";
 
   /**
-   * {0} created successfully.
+   * <ul>
+   *   <li>EN: {0} created successfully.
+   * </ul>
    */
   public static final String MSG_CODE_002 = "MSG_CODE_002";
 
   /**
-   * {0} updated successfully.
+   * <ul>
+   *   <li>EN: {0} updated successfully.
+   * </ul>
    */
   public static final String MSG_CODE_003 = "MSG_CODE_003";
 
   /**
-   * {0} deleted successfully.
+   * <ul>
+   *   <li>EN: {0} deleted successfully.
+   * </ul>
    */
   public static final String MSG_CODE_004 = "MSG_CODE_004";
 
-  // ============================================================
-  // Client Error Messages (100 - 199)
-  // ============================================================
-
   /**
-   * Invalid request.
+   * <ul>
+   *   <li>EN: Invalid request.
+   * </ul>
    */
   public static final String MSG_CODE_100 = "MSG_CODE_100";
 
   /**
-   * Unauthorized access.
+   * <ul>
+   *   <li>EN: Unauthorized access.
+   * </ul>
    */
   public static final String MSG_CODE_101 = "MSG_CODE_101";
 
   /**
-   * Access denied.
+   * <ul>
+   *   <li>EN: Access denied.
+   * </ul>
    */
   public static final String MSG_CODE_102 = "MSG_CODE_102";
 
   /**
-   * {0} not found.
+   * <ul>
+   *   <li>EN: {0} not found.
+   * </ul>
    */
   public static final String MSG_CODE_103 = "MSG_CODE_103";
 
   /**
-   * {0} already exists.
+   * <ul>
+   *   <li>EN: {0} already exists.
+   * </ul>
    */
   public static final String MSG_CODE_104 = "MSG_CODE_104";
 
   /**
-   * Internal server error.
+   * <ul>
+   *   <li>EN: Internal server error.
+   * </ul>
    */
   public static final String MSG_CODE_105 = "MSG_CODE_105";
 
-  // ============================================================
-  // Validation Messages (200 - 299)
-  // ============================================================
-
   /**
-   * {0} is required.
+   * <ul>
+   *   <li>EN: {0} is required.
+   * </ul>
    */
   public static final String MSG_CODE_200 = "MSG_CODE_200";
 
   /**
-   * Invalid or expired token.
+   * <ul>
+   *   <li>EN: Invalid or expired token.
+   * </ul>
    */
   public static final String MSG_CODE_201 = "MSG_CODE_201";
 
   /**
-   * Missing authentication token.
+   * <ul>
+   *   <li>EN: Missing authentication token.
+   * </ul>
    */
   public static final String MSG_CODE_202 = "MSG_CODE_202";
 
   /**
-   * Token has been blacklisted.
+   * <ul>
+   *   <li>EN: Token has been blacklisted.
+   * </ul>
    */
   public static final String MSG_CODE_203 = "MSG_CODE_203";
 
   /**
-   * {0} is invalid.
+   * <ul>
+   *   <li>EN: {0} is invalid.
+   * </ul>
    */
   public static final String MSG_CODE_204 = "MSG_CODE_204";
 
   /**
-   * Invalid sort field.
+   * <ul>
+   *   <li>EN: Invalid sort field.
+   * </ul>
    */
   public static final String MSG_CODE_205 = "MSG_CODE_205";
 
   /**
-   * Sort order must be ASC or DESC.
+   * <ul>
+   *   <li>EN: Sort order must be ASC or DESC.
+   * </ul>
    */
   public static final String MSG_CODE_206 = "MSG_CODE_206";
 
   /**
-   * Page number is required.
+   * <ul>
+   *   <li>EN: Page number is required.
+   * </ul>
    */
   public static final String MSG_CODE_207 = "MSG_CODE_207";
 
   /**
-   * Page number must be >= 1.
+   * <ul>
+   *   <li>EN: Page number must be >= 1.
+   * </ul>
    */
   public static final String MSG_CODE_208 = "MSG_CODE_208";
 
   /**
-   * Page size is required.
+   * <ul>
+   *   <li>EN: Page size is required.
+   * </ul>
    */
   public static final String MSG_CODE_209 = "MSG_CODE_209";
 
   /**
-   * Page size must be >= 1.
+   * <ul>
+   *   <li>EN: Page size must be >= 1.
+   * </ul>
    */
   public static final String MSG_CODE_210 = "MSG_CODE_210";
+
+  /**
+   * <ul>
+   *   <li>EN: Please wait before requesting a new OTP.
+   * </ul>
+   */
+  public static final String MSG_CODE_211 = "MSG_CODE_211";
+
+  /**
+   * <ul>
+   *   <li>EN: {0} has expired.
+   * </ul>
+   */
+  public static final String MSG_CODE_212 = "MSG_CODE_212";
 }

@@ -2,12 +2,15 @@ package com.tronhanh.exception;
 
 import com.tronhanh.constant.MessageCodeConstant;
 import com.tronhanh.dto.response.common.ApiResponse;
+import com.tronhanh.dto.response.common.ValidationErrorItem;
+import com.tronhanh.dto.response.common.ValidationErrorResponse;
 import com.tronhanh.util.MessageUtils;
 import com.tronhanh.util.ResponseUtils;
 import com.tronhanh.validation.EnumValue;
 import com.tronhanh.validation.RequireField;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -15,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,19 +42,35 @@ public class GlobalExceptionHandler
    * @return ResponseEntity with standardized ApiResponse
    */
   @ExceptionHandler(HttpException.class)
-  public ResponseEntity<ApiResponse<Object>> handleHttpException(HttpException ex) {
+  public ResponseEntity<ValidationErrorResponse> handleHttpException(HttpException ex) {
     logger.error("HttpException occurred: status={}, message={}", ex.getStatusCode(), ex.getMessage());
     HttpStatus status = HttpStatus.resolve(ex.getStatusCode());
     if (Objects.isNull(status)) {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
     }
-    if (Objects.nonNull(ex.getMessageCode())) {
-      if (Objects.nonNull(ex.getArgs()) && ex.getArgs().length > 0) {
-        return ResponseUtils.error(status, ex.getMessageCode(), ex.getArgs());
-      }
-      return ResponseUtils.error(status, ex.getMessageCode());
+    
+    String messageCode = Objects.nonNull(ex.getMessageCode()) ? ex.getMessageCode() : MessageCodeConstant.MSG_CODE_105;
+    String message;
+    if (Objects.nonNull(ex.getArgs()) && ex.getArgs().length > 0) {
+      message = MessageUtils.getMessage(messageCode, ex.getArgs());
+    } else {
+      message = MessageUtils.getMessage(messageCode);
     }
-    return ResponseUtils.error(status, MessageCodeConstant.MSG_CODE_105);
+
+    List<ValidationErrorItem> errors = new ArrayList<>();
+    errors.add(ValidationErrorItem.builder()
+        .messageCode(messageCode)
+        .message(message)
+        .build());
+
+    return ResponseEntity.status(status)
+        .body(ValidationErrorResponse.builder()
+            .status(status.value())
+            .errors(errors)
+            .timestamp(Instant.now())
+            .traceId(ResponseUtils.getTraceId())
+            .path(ResponseUtils.getRequestPath())
+            .build());
   }
 
   /**
@@ -61,11 +81,11 @@ public class GlobalExceptionHandler
    * @return ResponseEntity with standardized ApiResponse
    */
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ApiResponse<Object>> handleMethodArgumentNotValidException(
+  public ResponseEntity<ValidationErrorResponse> handleMethodArgumentNotValidException(
       MethodArgumentNotValidException ex) {
     logger.error("MethodArgumentNotValidException occurred: {}", ex.getMessage());
 
-    List<String> errors = new ArrayList<>();
+    List<ValidationErrorItem> errors = new ArrayList<>();
 
     for (ObjectError error : ex.getBindingResult().getAllErrors()) {
       try {
@@ -73,30 +93,63 @@ public class GlobalExceptionHandler
         if (Objects.nonNull(violation) && Objects.nonNull(violation.getConstraintDescriptor())) {
           var annotation = violation.getConstraintDescriptor().getAnnotation();
           if (annotation instanceof RequireField requireField) {
+            // Extract specific messageCode and field name from @RequireField annotation
             String messageCode = requireField.messageCode();
-            String fieldName = !requireField.field().isBlank() ? requireField.field() : violation.getPropertyPath().toString();
+            String fieldName = !requireField.field().isBlank()
+                ? requireField.field()
+                : violation.getPropertyPath().toString();
             String msg = MessageUtils.getMessage(messageCode, fieldName);
-            errors.add(msg);
+            errors.add(ValidationErrorItem.builder().messageCode(messageCode).message(msg).build());
             continue;
           } else if (annotation instanceof EnumValue enumValue) {
+            // Extract specific messageCode and field name from @EnumValue annotation
             String messageCode = enumValue.messageCode();
-            String fieldName = !enumValue.field().isBlank() ? enumValue.field() : violation.getPropertyPath().toString();
+            String fieldName = !enumValue.field().isBlank()
+                ? enumValue.field()
+                : violation.getPropertyPath().toString();
             String msg = MessageUtils.getMessage(messageCode, fieldName);
-            errors.add(msg);
+            errors.add(ValidationErrorItem.builder().messageCode(messageCode).message(msg).build());
+            continue;
+          } else if (annotation instanceof com.tronhanh.validation.MinValue minValue) {
+            // Extract specific messageCode and field name from @MinValue annotation
+            String messageCode = minValue.messageCode();
+            String fieldName = !minValue.field().isBlank()
+                ? minValue.field()
+                : violation.getPropertyPath().toString();
+            String msg = MessageUtils.getMessage(messageCode, fieldName);
+            errors.add(ValidationErrorItem.builder().messageCode(messageCode).message(msg).build());
             continue;
           }
         }
       } catch (Exception ignored) {
-        // Fallback for non-unwrap violations
+        // Fallback for non-unwrappable violations
       }
 
+      // Fallback: use the default message from the annotation
       String defaultMsg = error.getDefaultMessage();
       if (Objects.nonNull(defaultMsg) && !defaultMsg.isBlank()) {
-        errors.add(defaultMsg);
+        if (defaultMsg.startsWith("MSG_CODE_")) {
+          errors.add(ValidationErrorItem.builder()
+              .messageCode(defaultMsg)
+              .message(MessageUtils.getMessage(defaultMsg))
+              .build());
+        } else {
+          errors.add(ValidationErrorItem.builder()
+              .messageCode(MessageCodeConstant.MSG_CODE_100)
+              .message(defaultMsg)
+              .build());
+        }
       }
     }
 
-    return ResponseUtils.error(HttpStatus.BAD_REQUEST, MessageCodeConstant.MSG_CODE_100, errors);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(ValidationErrorResponse.builder()
+            .status(HttpStatus.BAD_REQUEST.value())
+            .errors(errors)
+            .timestamp(Instant.now())
+            .traceId(ResponseUtils.getTraceId())
+            .path(ResponseUtils.getRequestPath())
+            .build());
   }
 
   /**
@@ -106,32 +159,92 @@ public class GlobalExceptionHandler
    * @return ResponseEntity with standardized ApiResponse
    */
   @ExceptionHandler(ConstraintViolationException.class)
-  public ResponseEntity<ApiResponse<Object>> handleConstraintViolationException(
+  public ResponseEntity<ValidationErrorResponse> handleConstraintViolationException(
       ConstraintViolationException ex) {
     logger.error("ConstraintViolationException occurred: {}", ex.getMessage());
 
-    List<String> errors = new ArrayList<>();
+    List<ValidationErrorItem> errors = new ArrayList<>();
 
     for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
       if (Objects.nonNull(violation.getConstraintDescriptor())) {
         var annotation = violation.getConstraintDescriptor().getAnnotation();
         if (annotation instanceof RequireField requireField) {
+          // Extract messageCode and field name from @RequireField annotation
           String messageCode = requireField.messageCode();
-          String fieldName = !requireField.field().isBlank() ? requireField.field() : violation.getPropertyPath().toString();
+          String fieldName = !requireField.field().isBlank()
+              ? requireField.field()
+              : violation.getPropertyPath().toString();
           String msg = MessageUtils.getMessage(messageCode, fieldName);
-          errors.add(msg);
+          errors.add(ValidationErrorItem.builder().messageCode(messageCode).message(msg).build());
         } else if (annotation instanceof EnumValue enumValue) {
+          // Extract messageCode and field name from @EnumValue annotation
           String messageCode = enumValue.messageCode();
-          String fieldName = !enumValue.field().isBlank() ? enumValue.field() : violation.getPropertyPath().toString();
+          String fieldName = !enumValue.field().isBlank()
+              ? enumValue.field()
+              : violation.getPropertyPath().toString();
           String msg = MessageUtils.getMessage(messageCode, fieldName);
-          errors.add(msg);
+          errors.add(ValidationErrorItem.builder().messageCode(messageCode).message(msg).build());
+        } else if (annotation instanceof com.tronhanh.validation.MinValue minValue) {
+          // Extract messageCode and field name from @MinValue annotation
+          String messageCode = minValue.messageCode();
+          String fieldName = !minValue.field().isBlank()
+              ? minValue.field()
+              : violation.getPropertyPath().toString();
+          String msg = MessageUtils.getMessage(messageCode, fieldName);
+          errors.add(ValidationErrorItem.builder().messageCode(messageCode).message(msg).build());
         } else {
-          errors.add(violation.getMessage());
+          // Generic fallback for other constraint types
+          String defaultMsg = violation.getMessage();
+          if (Objects.nonNull(defaultMsg) && defaultMsg.startsWith("MSG_CODE_")) {
+            errors.add(ValidationErrorItem.builder()
+                .messageCode(defaultMsg)
+                .message(MessageUtils.getMessage(defaultMsg))
+                .build());
+          } else {
+            errors.add(ValidationErrorItem.builder()
+                .messageCode(MessageCodeConstant.MSG_CODE_100)
+                .message(defaultMsg)
+                .build());
+          }
         }
       }
     }
 
-    return ResponseUtils.error(HttpStatus.BAD_REQUEST, MessageCodeConstant.MSG_CODE_100, errors);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(ValidationErrorResponse.builder()
+            .status(HttpStatus.BAD_REQUEST.value())
+            .errors(errors)
+            .timestamp(Instant.now())
+            .traceId(ResponseUtils.getTraceId())
+            .path(ResponseUtils.getRequestPath())
+            .build());
+  }
+
+  /**
+   * Handles JSON unreadable exceptions, such as passing unknown properties in payload.
+   *
+   * @param ex the HttpMessageNotReadableException instance
+   * @return ResponseEntity with standardized ApiResponse
+   */
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ValidationErrorResponse> handleHttpMessageNotReadableException(
+      HttpMessageNotReadableException ex) {
+    logger.error("HttpMessageNotReadableException occurred: {}", ex.getMessage());
+
+    List<ValidationErrorItem> errors = new ArrayList<>();
+    errors.add(ValidationErrorItem.builder()
+        .messageCode(MessageCodeConstant.MSG_CODE_212)
+        .message(MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_212))
+        .build());
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(ValidationErrorResponse.builder()
+            .status(HttpStatus.BAD_REQUEST.value())
+            .errors(errors)
+            .timestamp(Instant.now())
+            .traceId(ResponseUtils.getTraceId())
+            .path(ResponseUtils.getRequestPath())
+            .build());
   }
 
   /**
@@ -141,10 +254,22 @@ public class GlobalExceptionHandler
    * @return ResponseEntity with standardized ApiResponse
    */
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ApiResponse<Object>> handleGenericException(Exception ex) {
+  public ResponseEntity<ValidationErrorResponse> handleGenericException(Exception ex) {
     logger.error("Unhandled exception: ", ex);
-    return ResponseUtils.error(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        MessageCodeConstant.MSG_CODE_105);
+
+    List<ValidationErrorItem> errors = new ArrayList<>();
+    errors.add(ValidationErrorItem.builder()
+        .messageCode(MessageCodeConstant.MSG_CODE_105)
+        .message(MessageUtils.getMessage(MessageCodeConstant.MSG_CODE_105))
+        .build());
+
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(ValidationErrorResponse.builder()
+            .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+            .errors(errors)
+            .timestamp(Instant.now())
+            .traceId(ResponseUtils.getTraceId())
+            .path(ResponseUtils.getRequestPath())
+            .build());
   }
 }

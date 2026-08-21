@@ -2,11 +2,8 @@ package com.tronhanh.service;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * Reusable global service interface for application-wide Redis key-value operations.
- */
-public interface RedisService
-{
+/** Reusable global service interface for application-wide Redis key-value operations. */
+public interface RedisService {
 
   /**
    * Sets key-value pair without expiration.

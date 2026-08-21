@@ -5,11 +5,11 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * Custom runtime exception carrying HTTP status code, message code, parameters, and English error message.
+ * Custom runtime exception carrying HTTP status code, message code, parameters, and English error
+ * message.
  */
 @Getter
-public class HttpException extends RuntimeException
-{
+public class HttpException extends RuntimeException {
 
   private final int statusCode;
   private final String messageCode;

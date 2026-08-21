@@ -5,12 +5,9 @@ import java.util.Objects;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
-/**
- * Utility component resolving messages from Spring {@link MessageSource}.
- */
+/** Utility component resolving messages from Spring {@link MessageSource}. */
 @Component
-public class MessageUtils
-{
+public class MessageUtils {
 
   private static MessageSource messageSource;
 
