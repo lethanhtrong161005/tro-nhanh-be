@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 /** Web configuration bean initializing CORS filter and origin access controls. */
 @Configuration
@@ -17,12 +17,12 @@ public class WebConfig {
   private String allowedOrigins;
 
   /**
-   * Configures CORS filter bean.
+   * Configures CORS configuration source bean.
    *
-   * @return CorsFilter bean
+   * @return CorsConfigurationSource bean
    */
   @Bean
-  public CorsFilter corsFilter() {
+  public CorsConfigurationSource corsConfigurationSource() {
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     CorsConfiguration config = new CorsConfiguration();
 
@@ -34,6 +34,6 @@ public class WebConfig {
     config.setExposedHeaders(List.of("X-Trace-Id", "Authorization", "Accept-Language"));
 
     source.registerCorsConfiguration("/**", config);
-    return new CorsFilter(source);
+    return source;
   }
 }
