@@ -8,9 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
-/**
- * Helper class for UserManageService to handle complex mapping and data transformation logic.
- */
+/** Helper class for UserManageService to handle complex mapping and data transformation logic. */
 @Component
 public class UserManageHelper {
 

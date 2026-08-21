@@ -49,5 +49,4 @@ public class UserManageServiceImpl implements UserManageService {
     // 5. Map to Response
     return userManageHelper.buildUserManagePageResponse(userPage);
   }
-
 }
