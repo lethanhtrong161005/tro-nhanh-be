@@ -10,12 +10,11 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 /**
  * Global Redis configuration for Lettuce Connection Factory and RedisTemplate.
  *
- * <p>Configures string key serializers and generic Jackson2 JSON value serializers
- * for application-wide Redis operations.
+ * <p>Configures string key serializers and generic Jackson2 JSON value serializers for
+ * application-wide Redis operations.
  */
 @Configuration
-public class RedisConfig
-{
+public class RedisConfig {
 
   /**
    * Constructs the global {@link RedisTemplate} bean.

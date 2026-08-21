@@ -5,22 +5,27 @@ import jakarta.validation.ConstraintValidatorContext;
 import java.util.Objects;
 
 /**
- * Constraint validator implementation enforcing non-null and non-blank rules for {@link RequireField}.
+ * Constraint validator implementation enforcing non-null and non-blank rules for {@link
+ * RequireField}. Supports validation for objects of any type (checks for null). If the type
+ * is String, it additionally checks for non-blank.
  */
-public class RequireFieldValidator implements ConstraintValidator<RequireField, String> {
+public class RequireFieldValidator implements ConstraintValidator<RequireField, Object> {
 
   /**
-   * Validates whether string is non-null and non-blank using java.util.Objects.
+   * Validates whether the object is non-null. If it is a string, ensures it is non-blank.
    *
-   * @param value string value to validate
+   * @param value object value to validate
    * @param context validator context
    * @return true if valid, false otherwise
    */
   @Override
-  public boolean isValid(String value, ConstraintValidatorContext context) {
+  public boolean isValid(Object value, ConstraintValidatorContext context) {
     if (Objects.isNull(value)) {
       return false;
     }
-    return !value.isBlank();
+    if (value instanceof String strValue) {
+      return !strValue.isBlank();
+    }
+    return true;
   }
 }

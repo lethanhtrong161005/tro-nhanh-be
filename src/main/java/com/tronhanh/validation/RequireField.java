@@ -9,9 +9,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Custom constraint annotation checking that a string field is non-null and non-blank.
- */
+/** Custom constraint annotation checking that a string field is non-null and non-blank. */
 @Documented
 @Constraint(validatedBy = RequireFieldValidator.class)
 @Target({ElementType.FIELD})

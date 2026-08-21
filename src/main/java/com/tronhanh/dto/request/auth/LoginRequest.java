@@ -21,14 +21,14 @@ public class LoginRequest
   /**
    * User's registered phone number.
    */
-  @Schema(description = "User registered phone number", example = "0987654321")
+  @Schema(description = "User registered phone number", example = "0900000000")
   @RequireField(field = "Phone number")
   private String phoneNumber;
 
   /**
    * User's plain text password.
    */
-  @Schema(description = "User account password", example = "SecurePassword123!")
+  @Schema(description = "User account password", example = "admin123")
   @RequireField(field = "Password")
   private String password;
 }

@@ -25,7 +25,6 @@ target/
 logs/
 *.log
 *.log.*
-logback*.xml
 
 # ============================================================
 # Operating System Files
@@ -77,3 +76,4 @@ tmp/
 *~
 hs_err_pid*
 replay_pid*
+

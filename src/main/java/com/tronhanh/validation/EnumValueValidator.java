@@ -6,7 +6,8 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * Constraint validator implementation verifying that a given value matches one of the declared constants of an Enum class.
+ * Constraint validator implementation verifying that a given value matches one of the declared
+ * constants of an Enum class.
  */
 public class EnumValueValidator implements ConstraintValidator<EnumValue, Object> {
 
@@ -24,8 +25,7 @@ public class EnumValueValidator implements ConstraintValidator<EnumValue, Object
     }
 
     if (value instanceof Enum<?>) {
-      return Arrays.stream(enumClass.getEnumConstants())
-          .anyMatch(e -> e.equals(value));
+      return Arrays.stream(enumClass.getEnumConstants()).anyMatch(e -> e.equals(value));
     }
 
     if (value instanceof String strVal) {

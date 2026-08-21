@@ -6,9 +6,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import com.tronhanh.annotation.UuidV7;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.util.UUID;
@@ -19,8 +18,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Entity representing application users mapped to database table users.
- * Uses UUID userId primary key and links to RoleEntity via explicit SystemRoleAssignmentEntity entity.
+ * Entity representing application users mapped to database table users. Uses UUID userId primary
+ * key and links to RoleEntity via explicit SystemRoleAssignmentEntity entity.
  */
 @Getter
 @Setter
@@ -32,7 +31,7 @@ import lombok.Setter;
 public class UserEntity extends BaseEntity {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
+  @UuidV7
   @Column(name = "user_id", updatable = false, nullable = false)
   private UUID userId;
 

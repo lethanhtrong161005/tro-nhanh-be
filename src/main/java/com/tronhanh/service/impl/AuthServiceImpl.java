@@ -3,11 +3,11 @@ package com.tronhanh.service.impl;
 import com.tronhanh.constant.AppConstant;
 import com.tronhanh.constant.MessageCodeConstant;
 import com.tronhanh.dto.request.auth.LoginRequest;
-import com.tronhanh.dto.request.auth.LogoutRequest;
-import com.tronhanh.dto.request.auth.RefreshTokenRequest;
+import com.tronhanh.dto.request.auth.ResendOtpRequest;
 import com.tronhanh.dto.request.auth.VerifyOtpRequest;
 import com.tronhanh.dto.response.auth.LoginResponse;
-import com.tronhanh.dto.response.auth.TokenResponse;
+import jakarta.servlet.http.HttpServletResponse;
+import com.tronhanh.util.CookieUtils;
 import com.tronhanh.dto.response.auth.UserProfileResponse;
 import com.tronhanh.entity.UserEntity;
 import com.tronhanh.enums.UserStatus;
@@ -18,7 +18,6 @@ import com.tronhanh.security.JwtProvider;
 import com.tronhanh.service.AuthService;
 import com.tronhanh.service.RedisService;
 import com.tronhanh.util.CommonUtil;
-import com.tronhanh.util.MessageUtils;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -32,112 +31,101 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Enterprise Implementation of {@link AuthService} featuring 2FA, Token Family Rotation, and JTI Blacklist Logout.
+ * Enterprise Implementation of {@link AuthService} featuring 2FA, Token Family Rotation, and JTI
+ * Blacklist Logout.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AuthServiceImpl implements AuthService
-{
+public class AuthServiceImpl implements AuthService {
 
-  /**
-   * User repository component.
-   */
+  /** User repository component. */
   private final UserRepository userRepository;
 
-  /**
-   * Password encoder component.
-   */
+  /** Password encoder component. */
   private final PasswordEncoder passwordEncoder;
 
-  /**
-   * JWT provider component.
-   */
+  /** JWT provider component. */
   private final JwtProvider jwtProvider;
 
-  /**
-   * Redis service component.
-   */
+  /** Redis service component. */
   private final RedisService redisService;
 
-  /**
-   * User helper mapping component.
-   */
+  /** User helper mapping component. */
   private final UserHelper userHelper;
 
+  // TODO: Integrate with SMS service to send OTP code to user's phone number
   @Override
   @Transactional(readOnly = true)
   public LoginResponse login(LoginRequest request) {
-    UserEntity user = userRepository.findByPhoneNumberAndIsDeletedFalse(request.getPhoneNumber())
-        .orElseThrow(() -> new HttpException(
-            HttpStatus.UNAUTHORIZED,
-            MessageCodeConstant.MSG_CODE_101
-        ));
+    UserEntity user =
+        userRepository
+            .findByPhoneNumberAndIsDeletedFalse(request.getPhoneNumber())
+            .orElseThrow(
+                () -> new HttpException(HttpStatus.UNAUTHORIZED, MessageCodeConstant.MSG_CODE_101));
 
     if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-      throw new HttpException(
-          HttpStatus.UNAUTHORIZED,
-          MessageCodeConstant.MSG_CODE_101
-      );
+      throw new HttpException(HttpStatus.UNAUTHORIZED, MessageCodeConstant.MSG_CODE_101);
     }
 
     if (user.getStatus() != UserStatus.ACTIVE) {
-      throw new HttpException(
-          HttpStatus.FORBIDDEN,
-          MessageCodeConstant.MSG_CODE_102
-      );
+      throw new HttpException(HttpStatus.FORBIDDEN, MessageCodeConstant.MSG_CODE_102);
     }
 
     // Generate 6-digit OTP code & Session ID using CommonUtil
     String otpCode = CommonUtil.generateOtpCode();
-    String sessionId = UUID.randomUUID().toString();
+    String sessionId = CommonUtil.generateUuidV7().toString();
 
     // Save OTP & pending auth session in Redis for 5 minutes
-    redisService.set(AppConstant.OTP_PREFIX + request.getPhoneNumber(), otpCode, AppConstant.OTP_TTL_MINUTES, TimeUnit.MINUTES);
-    redisService.set(AppConstant.PENDING_AUTH_PREFIX + sessionId, request.getPhoneNumber(), AppConstant.OTP_TTL_MINUTES, TimeUnit.MINUTES);
+    redisService.set(
+        AppConstant.OTP_PREFIX + request.getPhoneNumber(),
+        otpCode,
+        AppConstant.OTP_TTL_MINUTES,
+        TimeUnit.MINUTES);
+    redisService.set(
+        AppConstant.PENDING_AUTH_PREFIX + sessionId,
+        request.getPhoneNumber(),
+        AppConstant.OTP_TTL_MINUTES,
+        TimeUnit.MINUTES);
 
-    log.info("[2FA] Generated OTP code [{}] for phone number [{}] (Session: {})", otpCode, request.getPhoneNumber(), sessionId);
+    log.info(
+        "[2FA] Generated OTP code [{}] for phone number [{}] (Session: {})",
+        otpCode,
+        request.getPhoneNumber(),
+        sessionId);
 
-    String message = MessageUtils.getLocalizedText(MessageCodeConstant.MSG_CODE_001);
     return LoginResponse.builder()
         .sessionId(sessionId)
-        .message(message)
         .expiresInSeconds(AppConstant.OTP_TTL_MINUTES * 60)
         .build();
   }
 
   @Override
-  @Transactional
-  public TokenResponse verifyOtp(VerifyOtpRequest request) {
+  public void verifyOtp(VerifyOtpRequest request, HttpServletResponse response) {
     String phoneNumber = redisService.get(AppConstant.PENDING_AUTH_PREFIX + request.getSessionId());
     if (Objects.isNull(phoneNumber)) {
-      throw new HttpException(
-          HttpStatus.BAD_REQUEST,
-          MessageCodeConstant.MSG_CODE_201
-      );
+      throw new HttpException(HttpStatus.BAD_REQUEST, MessageCodeConstant.MSG_CODE_201);
     }
 
     String storedOtp = redisService.get(AppConstant.OTP_PREFIX + phoneNumber);
     if (Objects.isNull(storedOtp) || !storedOtp.equals(request.getOtpCode())) {
-      throw new HttpException(
-          HttpStatus.BAD_REQUEST,
-          MessageCodeConstant.MSG_CODE_201
-      );
+      throw new HttpException(HttpStatus.BAD_REQUEST, MessageCodeConstant.MSG_CODE_201);
     }
 
     // Clean up OTP and pending session from Redis
     redisService.delete(AppConstant.OTP_PREFIX + phoneNumber);
     redisService.delete(AppConstant.PENDING_AUTH_PREFIX + request.getSessionId());
 
-    UserEntity user = userRepository.findByPhoneNumberAndIsDeletedFalse(phoneNumber)
-        .orElseThrow(() -> new HttpException(
-            HttpStatus.NOT_FOUND,
-            MessageCodeConstant.MSG_CODE_103,
-            "User"
-        ));
+    UserEntity user =
+        userRepository
+            .findByPhoneNumberAndIsDeletedFalse(phoneNumber)
+            .orElseThrow(
+                () ->
+                    new HttpException(
+                        HttpStatus.NOT_FOUND, MessageCodeConstant.MSG_CODE_103, "User"));
 
     // Generate new Token Family ID
-    String familyId = UUID.randomUUID().toString();
+    String familyId = CommonUtil.generateUuidV7().toString();
 
     String accessToken = jwtProvider.generateAccessToken(user, familyId);
     String refreshToken = jwtProvider.generateRefreshToken(user, familyId);
@@ -146,26 +134,21 @@ public class AuthServiceImpl implements AuthService
     String jtiRt = jwtProvider.getJtiFromToken(refreshToken);
     redisService.set(
         AppConstant.RT_FAMILY_PREFIX + familyId + ":" + jtiRt,
-        "ACTIVE",
+        AppConstant.TOKEN_STATUS_ACTIVE,
         AppConstant.REFRESH_FAMILY_TTL_DAYS,
-        TimeUnit.DAYS
-    );
+        TimeUnit.DAYS);
 
-    return TokenResponse.builder()
-        .accessToken(accessToken)
-        .refreshToken(refreshToken)
-        .build();
+    CookieUtils.setAuthCookies(response, accessToken, refreshToken);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public TokenResponse refreshToken(RefreshTokenRequest request) {
-    String refreshToken = request.getRefreshToken();
+  public void refreshToken(String refreshToken, HttpServletResponse response) {
+    if (refreshToken == null || refreshToken.isBlank()) {
+      throw new HttpException(HttpStatus.UNAUTHORIZED, MessageCodeConstant.MSG_CODE_201);
+    }
     if (!jwtProvider.validateToken(refreshToken)) {
-      throw new HttpException(
-          HttpStatus.UNAUTHORIZED,
-          MessageCodeConstant.MSG_CODE_201
-      );
+      throw new HttpException(HttpStatus.UNAUTHORIZED, MessageCodeConstant.MSG_CODE_201);
     }
 
     UUID userId = jwtProvider.getUserIdFromToken(refreshToken);
@@ -175,34 +158,36 @@ public class AuthServiceImpl implements AuthService
     // 1. Check if token family was revoked
     if (redisService.hasKey(AppConstant.RT_REVOKED_FAMILY_PREFIX + familyId)) {
       log.warn("[Token Theft] Attempt to use token from revoked family: {}", familyId);
-      throw new HttpException(
-          HttpStatus.UNAUTHORIZED,
-          MessageCodeConstant.MSG_CODE_201
-      );
+      throw new HttpException(HttpStatus.UNAUTHORIZED, MessageCodeConstant.MSG_CODE_201);
     }
 
     // 2. Check if this specific refresh token JTI is active
     String familyKey = AppConstant.RT_FAMILY_PREFIX + familyId + ":" + jtiRt;
     if (!redisService.hasKey(familyKey)) {
       // Replay attack / Reuse of already rotated refresh token! Revoke entire family!
-      log.error("[Token Theft Detected] Refresh token JTI {} already spent. Revoking family {}", jtiRt, familyId);
-      redisService.set(AppConstant.RT_REVOKED_FAMILY_PREFIX + familyId, "REVOKED", AppConstant.REFRESH_FAMILY_TTL_DAYS, TimeUnit.DAYS);
+      log.error(
+          "[Token Theft Detected] Refresh token JTI {} already spent. Revoking family {}",
+          jtiRt,
+          familyId);
+      redisService.set(
+          AppConstant.RT_REVOKED_FAMILY_PREFIX + familyId,
+          AppConstant.TOKEN_STATUS_REVOKED,
+          AppConstant.REFRESH_FAMILY_TTL_DAYS,
+          TimeUnit.DAYS);
 
-      throw new HttpException(
-          HttpStatus.UNAUTHORIZED,
-          MessageCodeConstant.MSG_CODE_201
-      );
+      throw new HttpException(HttpStatus.UNAUTHORIZED, MessageCodeConstant.MSG_CODE_201);
     }
 
     // 3. Token is valid — invalidate spent JTI
     redisService.delete(familyKey);
 
-    UserEntity user = userRepository.findById(userId)
-        .orElseThrow(() -> new HttpException(
-            HttpStatus.NOT_FOUND,
-            MessageCodeConstant.MSG_CODE_103,
-            "User"
-        ));
+    UserEntity user =
+        userRepository
+            .findByUserIdAndIsDeletedFalse(userId)
+            .orElseThrow(
+                () ->
+                    new HttpException(
+                        HttpStatus.NOT_FOUND, MessageCodeConstant.MSG_CODE_103, "User"));
 
     // 4. Rotate tokens: Keep same familyId, generate new JTI for AT and RT
     String newAccessToken = jwtProvider.generateAccessToken(user, familyId);
@@ -211,61 +196,112 @@ public class AuthServiceImpl implements AuthService
     String newJtiRt = jwtProvider.getJtiFromToken(newRefreshToken);
     redisService.set(
         AppConstant.RT_FAMILY_PREFIX + familyId + ":" + newJtiRt,
-        "ACTIVE",
+        AppConstant.TOKEN_STATUS_ACTIVE,
         AppConstant.REFRESH_FAMILY_TTL_DAYS,
-        TimeUnit.DAYS
-    );
+        TimeUnit.DAYS);
 
-    return TokenResponse.builder()
-        .accessToken(newAccessToken)
-        .refreshToken(newRefreshToken)
-        .build();
+    CookieUtils.setAuthCookies(response, newAccessToken, newRefreshToken);
   }
 
   @Override
-  public void logout(String authHeader, LogoutRequest logoutRequest) {
+  public void logout(String accessToken, String refreshToken, HttpServletResponse response) {
     // 1. Blacklist Access Token via JTI
-    if (Objects.nonNull(authHeader) && authHeader.startsWith("Bearer ")) {
-      String accessToken = authHeader.substring(7);
-      if (jwtProvider.validateToken(accessToken)) {
-        String jtiAt = jwtProvider.getJtiFromToken(accessToken);
-        long remainingMs = jwtProvider.getRemainingExpirationMs(accessToken);
+    if (Objects.nonNull(accessToken) && !accessToken.isBlank()) {
+      String token = accessToken.startsWith("Bearer ") ? accessToken.substring(7) : accessToken;
+      if (jwtProvider.validateToken(token)) {
+        String jtiAt = jwtProvider.getJtiFromToken(token);
+        long remainingMs = jwtProvider.getRemainingExpirationMs(token);
         if (remainingMs > 0 && Objects.nonNull(jtiAt)) {
-          redisService.set(AppConstant.BLACKLIST_JTI_PREFIX + jtiAt, "REVOKED", remainingMs, TimeUnit.MILLISECONDS);
+          redisService.set(
+              AppConstant.BLACKLIST_JTI_PREFIX + jtiAt,
+              AppConstant.TOKEN_STATUS_REVOKED,
+              remainingMs,
+              TimeUnit.MILLISECONDS);
           log.info("[Logout] Blacklisted Access Token JTI [{}] for {} ms", jtiAt, remainingMs);
         }
       }
     }
 
     // 2. Revoke Refresh Token & Token Family
-    if (Objects.nonNull(logoutRequest) && Objects.nonNull(logoutRequest.getRefreshToken())) {
-      String refreshToken = logoutRequest.getRefreshToken();
-      if (jwtProvider.validateToken(refreshToken)) {
-        String familyId = jwtProvider.getFamilyIdFromToken(refreshToken);
-        String jtiRt = jwtProvider.getJtiFromToken(refreshToken);
+    if (refreshToken != null && !refreshToken.isBlank()) {
+      try {
+        if (jwtProvider.validateToken(refreshToken)) {
+          String familyId = jwtProvider.getFamilyIdFromToken(refreshToken);
+          String jtiRt = jwtProvider.getJtiFromToken(refreshToken);
 
-        if (Objects.nonNull(familyId)) {
-          redisService.set(AppConstant.RT_REVOKED_FAMILY_PREFIX + familyId, "REVOKED", AppConstant.REFRESH_FAMILY_TTL_DAYS, TimeUnit.DAYS);
-          if (Objects.nonNull(jtiRt)) {
-            redisService.delete(AppConstant.RT_FAMILY_PREFIX + familyId + ":" + jtiRt);
+          if (Objects.nonNull(familyId)) {
+            redisService.set(
+                AppConstant.RT_REVOKED_FAMILY_PREFIX + familyId,
+                AppConstant.TOKEN_STATUS_REVOKED,
+                AppConstant.REFRESH_FAMILY_TTL_DAYS,
+                TimeUnit.DAYS);
+            if (Objects.nonNull(jtiRt)) {
+              redisService.delete(AppConstant.RT_FAMILY_PREFIX + familyId + ":" + jtiRt);
+            }
+            log.info(
+                "[Logout] Revoked Token Family [{}] and Refresh Token JTI [{}]", familyId, jtiRt);
           }
-          log.info("[Logout] Revoked Token Family [{}] and Refresh Token JTI [{}]", familyId, jtiRt);
         }
+      } catch (Exception e) {
+        log.error("Error invalidating refresh token during logout", e);
+        CookieUtils.clearAuthCookies(response);
+        throw new HttpException(HttpStatus.UNAUTHORIZED, MessageCodeConstant.MSG_CODE_201);
       }
     }
+
+    CookieUtils.clearAuthCookies(response);
   }
 
   @Override
   @Transactional(readOnly = true)
   public UserProfileResponse getCurrentUserProfile() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (Objects.isNull(authentication) || !(authentication.getPrincipal() instanceof UserEntity user)) {
-      throw new HttpException(
-          HttpStatus.UNAUTHORIZED,
-          MessageCodeConstant.MSG_CODE_101
-      );
+    if (Objects.isNull(authentication)
+        || !(authentication.getPrincipal() instanceof UserEntity user)) {
+      throw new HttpException(HttpStatus.UNAUTHORIZED, MessageCodeConstant.MSG_CODE_101);
     }
 
     return userHelper.mapToUserProfileResponse(user);
+  }
+
+  @Override
+  public void resendOtp(ResendOtpRequest request) {
+
+    // 1. Validate that the pending auth session still exists in Redis
+    String phoneNumber = redisService.get(AppConstant.PENDING_AUTH_PREFIX + request.getSessionId());
+    if (Objects.isNull(phoneNumber)) {
+      throw new HttpException(HttpStatus.BAD_REQUEST, MessageCodeConstant.MSG_CODE_201);
+    }
+
+    // 2. Enforce 60-second cooldown to prevent SMS flooding abuse
+    String cooldownKey = AppConstant.OTP_RESEND_COOLDOWN_PREFIX + request.getSessionId();
+    if (redisService.hasKey(cooldownKey)) {
+      throw new HttpException(HttpStatus.TOO_MANY_REQUESTS, MessageCodeConstant.MSG_CODE_211);
+    }
+
+    // 3. Generate fresh 6-digit OTP code and overwrite the old one, resetting TTL
+    String newOtpCode = CommonUtil.generateOtpCode();
+    redisService.set(
+        AppConstant.OTP_PREFIX + phoneNumber,
+        newOtpCode,
+        AppConstant.OTP_TTL_MINUTES,
+        TimeUnit.MINUTES);
+
+    // 4. Refresh the pending auth session TTL to extend the session window
+    redisService.set(
+        AppConstant.PENDING_AUTH_PREFIX + request.getSessionId(),
+        phoneNumber,
+        AppConstant.OTP_TTL_MINUTES,
+        TimeUnit.MINUTES);
+
+    // 5. Set cooldown lock to prevent immediate re-request
+    redisService.set(
+        cooldownKey,
+        AppConstant.TOKEN_STATUS_ACTIVE,
+        AppConstant.OTP_RESEND_COOLDOWN_SECONDS,
+        TimeUnit.SECONDS);
+
+    // TODO: Integrate with SMS service to deliver newOtpCode to phoneNumber
+    log.info("[2FA] OTP resent for session [{}]", request.getSessionId());
   }
 }

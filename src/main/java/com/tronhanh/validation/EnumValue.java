@@ -9,9 +9,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Custom constraint annotation verifying that a field value matches a valid Enum constant.
- */
+/** Custom constraint annotation verifying that a field value matches a valid Enum constant. */
 @Documented
 @Constraint(validatedBy = EnumValueValidator.class)
 @Target({ElementType.FIELD})

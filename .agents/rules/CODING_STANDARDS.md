@@ -16,8 +16,7 @@
 7. [Exception Handling](#exception-handling)
 8. [Data Access (JPA/Repositories)](#data-access-jparepositories)
 9. [Security & Data Privacy](#security--data-privacy)
-10. [Testing Standards](#testing-standards)
-11. [Banned Practices](#banned-practices)
+10. [Banned Practices](#banned-practices)
 
 ---
 
@@ -36,19 +35,19 @@ BiteBolt follows **Google Java Style Guide** (2017) with the following key rules
 ### Class Structure
 ```java
 public class MyClass {
-  // Constants
-  private static final String CONSTANT_NAME = "value";
-  
-  // Fields
-  private String instanceField;
-  
-  // Constructors
-  public MyClass() { }
-  
-  // Methods (public first, then protected, then private)
-  public void publicMethod() { }
-  protected void protectedMethod() { }
-  private void privateMethod() { }
+    // Constants
+    private static final String CONSTANT_NAME = "value";
+
+    // Fields
+    private String instanceField;
+
+    // Constructors
+    public MyClass() { }
+
+    // Methods (public first, then protected, then private)
+    public void publicMethod() { }
+    protected void protectedMethod() { }
+    private void privateMethod() { }
 }
 ```
 
@@ -223,22 +222,22 @@ public void process(String data) {
 
 ### ✅ Data Transfer Objects (DTO) & Controller Documentation
 - **Mandatory Swagger Annotations**:
-  - All **Controller** classes MUST have `@Tag(name = "...", description = "...")` and `@Operation(summary = "...")` on endpoints.
-  - All **Request DTO** and **Response DTO** classes MUST have `@Schema(description = "...")` at the class level and on every field with `description` and `example` attributes.
+    - All **Controller** classes MUST have `@Tag(name = "...", description = "...")` and `@Operation(summary = "...")` on endpoints.
+    - All **Request DTO** and **Response DTO** classes MUST have `@Schema(description = "...")` at the class level and on every field with `description` and `example` attributes.
 
 ### ✅ Class Names
 - **PascalCase**: `UserService`, `UserRepository`, `CreateUserRequest`
 - **Suffixes**: Use meaningful suffixes
-  - Service classes: `*Service` (e.g., `UserService`)
-  - Data transfer objects: `*Request`, `*Response`, `*DTO`
-  - Repository classes: `*Repository` (e.g., `UserRepository`)
-  - Exception classes: `*Exception` (e.g., `UserNotFoundException`)
-  - Test classes: `*Test` (e.g., `UserServiceTest`)
+    - Service classes: `*Service` (e.g., `UserService`)
+    - Data transfer objects: `*Request`, `*Response`, `*DTO`
+    - Repository classes: `*Repository` (e.g., `UserRepository`)
+    - Exception classes: `*Exception` (e.g., `UserNotFoundException`)
+    - Test classes: `*Test` (e.g., `UserServiceTest`)
 
 ### ✅ Variable & Method Names
 - **camelCase**: `userId`, `userEmail`, `isActive`
 - **Boolean prefixes**: `is*`, `has*`, `can*`
-  - `isDeleted`, `isActive`, `hasPermission`, `canAccess`
+    - `isDeleted`, `isActive`, `hasPermission`, `canAccess`
 - **Avoid**: Single letter variables (except loop counters)
 
 ### ✅ Constant Names
@@ -374,11 +373,11 @@ int id = user.getId();  // Get the ID
 1. **Use SLF4J** (`org.slf4j.Logger`)
 2. **NEVER use** `System.out.println()`, `System.err.println()`
 3. **Appropriate log levels**:
-   - `TRACE`: Very detailed information
-   - `DEBUG`: Detailed technical information
-   - `INFO`: Business events (user login, order created)
-   - `WARN`: Potentially harmful situations
-   - `ERROR`: Error events that might still allow the app to run
+    - `TRACE`: Very detailed information
+    - `DEBUG`: Detailed technical information
+    - `INFO`: Business events (user login, order created)
+    - `WARN`: Potentially harmful situations
+    - `ERROR`: Error events that might still allow the app to run
 
 ### ✅ Logging Examples
 ```java
@@ -430,8 +429,8 @@ log.info("Message");  // 'log' is not defined
 ### ✅ Exception Rules
 1. **Create custom exceptions** for business errors
 2. **Extend proper base class**:
-   - Business exceptions → `RuntimeException` or `HttpException`
-   - Never extend `Exception` directly (forces checked exception handling)
+    - Business exceptions → `RuntimeException` or `HttpException`
+    - Never extend `Exception` directly (forces checked exception handling)
 3. **Always provide message constants**
 4. **Log exceptions with context**
 
@@ -660,87 +659,9 @@ public void deleteUser(Long userId) {
   userRepository.deleteById(userId);  // What if userId is invalid?
 }
 ```
-
 ---
 
-## 10. Testing Standards
-
-### ✅ Testing Rules
-1. **Minimum 80% code coverage** for all services
-2. **Unit tests** for business logic
-3. **Integration tests** for repository/database access
-4. **Test should be independent** and not rely on execution order
-5. **Use meaningful test names** that describe what is being tested
-
-### ✅ Test Example
-```java
-/**
- * Unit tests for UserService.
- * Tests business logic and error conditions.
- */
-@ExtendWith(MockitoExtension.class)
-class UserServiceTest {
-  
-  @Mock
-  private UserRepository userRepository;
-  
-  @Mock
-  private PasswordEncoder passwordEncoder;
-  
-  @InjectMocks
-  private UserService userService;
-  
-  @Test
-  void testCreateUser_WithValidInput_ShouldReturnUserResponse() {
-    // Arrange
-    CreateUserRequest request = CreateUserRequest.builder()
-        .email("test@bitebolt.com")
-        .password("securePassword123")
-        .name("John Doe")
-        .build();
-    
-    User savedUser = User.builder()
-        .id(1L)
-        .email("test@bitebolt.com")
-        .name("John Doe")
-        .isDeleted(false)
-        .build();
-    
-    when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
-    when(passwordEncoder.encode(request.getPassword())).thenReturn("hashedPassword");
-    when(userRepository.save(any(User.class))).thenReturn(savedUser);
-    
-    // Act
-    UserResponse response = userService.createUser(request);
-    
-    // Assert
-    assertNotNull(response);
-    assertEquals("test@bitebolt.com", response.getEmail());
-    assertEquals("John Doe", response.getName());
-    verify(userRepository, times(1)).save(any(User.class));
-  }
-  
-  @Test
-  void testCreateUser_WithDuplicateEmail_ShouldThrowException() {
-    // Arrange
-    CreateUserRequest request = CreateUserRequest.builder()
-        .email("existing@bitebolt.com")
-        .password("securePassword123")
-        .build();
-    
-    when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
-    
-    // Act & Assert
-    assertThrows(UserAlreadyExistsException.class, () -> {
-      userService.createUser(request);
-    });
-  }
-}
-```
-
----
-
-## 11. Banned Practices
+## 10. Banned Practicess
 
 ### ❌ NEVER DO THIS
 
@@ -759,7 +680,7 @@ class UserServiceTest {
 
 ---
 
-## 12. Null & Empty Checks
+## 11. Null & Empty Checks
 
 ### ✅ Null Checks — use `java.util.Objects`
 
@@ -804,10 +725,10 @@ if (name.length() == 0) { }
 ```java
 // ✅ CORRECT
 if (list == null || list.isEmpty()) { }   // explicit null + empty guard
-if (ObjectUtils.isEmpty(list)) { }        // Spring utility (handles null + empty)
+        if (ObjectUtils.isEmpty(list)) { }        // Spring utility (handles null + empty)
 
 // ❌ WRONG
-if (list.size() == 0) { }                 // NPE risk if list is null
+        if (list.size() == 0) { }                 // NPE risk if list is null
 ```
 
 ---

@@ -54,5 +54,14 @@ services:
     command: redis-server --requirepass ${TN_REDIS_PASSWORD}
     restart: always
 
+  redis-ui:
+    image: redis/redisinsight:latest
+    container_name: tronhanh-redis-ui-prod
+    restart: always
+    ports:
+      - "5542:5540"
+    depends_on:
+      - redis-prod
+
 volumes:
   pgdata_prod:

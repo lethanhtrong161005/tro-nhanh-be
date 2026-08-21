@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tronhanh.constant.AppConstant;
 import com.tronhanh.constant.MessageCodeConstant;
 import com.tronhanh.dto.response.common.ApiResponse;
+import com.tronhanh.dto.response.common.ValidationErrorResponse;
 import com.tronhanh.security.JwtAuthenticationFilter;
 import com.tronhanh.security.TraceIdFilter;
 import com.tronhanh.util.ResponseUtils;
@@ -94,8 +95,7 @@ public class SecurityConfig
             .requestMatchers(AppConstant.PUBLIC_ENDPOINTS).permitAll()
             .anyRequest().authenticated()
         )
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterBefore(traceIdFilter, JwtAuthenticationFilter.class);
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }
@@ -113,7 +113,7 @@ public class SecurityConfig
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
 
-        ResponseEntity<ApiResponse<Void>> errorResponse = ResponseUtils.error(
+        ResponseEntity<ValidationErrorResponse> errorResponse = ResponseUtils.error(
             HttpStatus.UNAUTHORIZED,
             MessageCodeConstant.MSG_CODE_101
         );
@@ -135,7 +135,7 @@ public class SecurityConfig
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
 
-        ResponseEntity<ApiResponse<Void>> errorResponse = ResponseUtils.error(
+        ResponseEntity<ValidationErrorResponse> errorResponse = ResponseUtils.error(
             HttpStatus.FORBIDDEN,
             MessageCodeConstant.MSG_CODE_102
         );
