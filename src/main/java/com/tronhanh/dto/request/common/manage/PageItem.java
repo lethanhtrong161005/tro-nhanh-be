@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
@@ -43,6 +44,6 @@ public class PageItem {
     int page =
         (pageItem != null && pageItem.getPageNumber() != null) ? pageItem.getPageNumber() : 1;
     int size = (pageItem != null && pageItem.getPageSize() != null) ? pageItem.getPageSize() : 10;
-    return org.springframework.data.domain.PageRequest.of(Math.max(0, page - 1), size, sort);
+    return PageRequest.of(Math.max(0, page - 1), size, sort);
   }
 }
