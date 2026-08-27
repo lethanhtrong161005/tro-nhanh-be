@@ -26,6 +26,7 @@ CREATE INDEX IF NOT EXISTS idx_rental_listing_images_listing_id
 
 
 CREATE TABLE rental_listing_amenities (
+    amenity_relation_id UUID NOT NULL,
     listing_id UUID NOT NULL,
     amenity_id UUID NOT NULL,
 
@@ -36,7 +37,7 @@ CREATE TABLE rental_listing_amenities (
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
 
     CONSTRAINT pk_rental_listing_amenities
-        amenity_relation_id UUID PRIMARY KEY,
+        PRIMARY KEY (amenity_relation_id),
 
     CONSTRAINT fk_rental_listing_amenities_listings
         FOREIGN KEY (listing_id)
