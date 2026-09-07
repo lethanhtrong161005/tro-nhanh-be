@@ -21,11 +21,19 @@ public final class AppConstant {
 
   /** Public endpoints permitted without authentication. */
   public static final String[] PUBLIC_ENDPOINTS = {
+    // auth
     "/api/v1/auth/login",
     "/api/v1/auth/verify-otp",
     "/api/v1/auth/resend-otp",
     "/api/v1/auth/refresh-token",
+
+    // listing
+    "/api/v1/rental-listings",
+
+    // health
     "/api/v1/health",
+
+    // swagger
     "/swagger-ui/**",
     "/swagger-ui.html",
     "/v3/api-docs/**"
