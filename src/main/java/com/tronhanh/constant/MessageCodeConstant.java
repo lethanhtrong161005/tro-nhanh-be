@@ -170,4 +170,36 @@ public final class MessageCodeConstant {
    * </ul>
    */
   public static final String MSG_CODE_212 = "MSG_CODE_212";
+
+  // ============================================================
+  // [RENTAL LISTING] Messages
+  // ============================================================
+
+  /**
+   * <ul>
+   *   <li>EN: Listing is currently boosted and cannot be edited.
+   * </ul>
+   */
+  public static final String MSG_CODE_300 = "MSG_CODE_300";
+
+  /**
+   * <ul>
+   *   <li>EN: You are not the owner of this listing.
+   * </ul>
+   */
+  public static final String MSG_CODE_301 = "MSG_CODE_301";
+
+  /**
+   * <ul>
+   *   <li>EN: Listing type is not active or not found.
+   * </ul>
+   */
+  public static final String MSG_CODE_302 = "MSG_CODE_302";
+
+  /**
+   * <ul>
+   *   <li>EN: One or more selected amenities were not found.
+   * </ul>
+   */
+  public static final String MSG_CODE_303 = "MSG_CODE_303";
 }
