@@ -60,4 +60,8 @@ public class UserEntity extends BaseEntity {
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private SystemRoleAssignmentEntity systemRoleAssignment;
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private UserProfileEntity userProfile;
 }
+
